@@ -1,0 +1,78 @@
+#FROM ubuntu:16.04
+FROM pre_choose:v1
+
+ARG ip_host
+ENV MEMCACHED_USER=xxx \
+    IP_HOST=$ip_host
+
+#COPY ./default /etc/nginx/sites-available/
+
+RUN apt-get install -y php7.1 php7.1-fpm libapache2-mod-php7.1 php7.1-cli php7.1-common php7.1-mbstring php7.1-gd php7.1-intl php7.1-xml php7.1-mysql php7.1-mcrypt php7.1-zip php7.1-curl \
+    && apt-get -y install php-memcached memcached \
+    && apt-get install -y git \
+    && apt-get -y install supervisor
+
+#COPY ./default /etc/nginx/sites-available/
+
+RUN useradd -m xxx \
+    && sed -i 's/max_execution_time = 30/max_execution_time = 300/g' /etc/php/7.1/fpm/php.ini \
+    && sed -i 's/;request_terminate_timeout = 0/request_terminate_timeout = 300/g' /etc/php/7.1/fpm/pool.d/www.conf \
+    && apt-get install curl \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+USER xxx
+RUN cd /home/xxx \
+    && git clone xxx \
+    && cd Choose \
+    && git fetch --all \
+    && git checkout -b dev origin/dev \
+    && git pull origin dev \
+    && sed -i 's/xxx/ooo/g' .gitmodules \
+    && git submodule init \
+    && git submodule update \
+    && cd frontend \
+    && git fetch --all \
+    && git checkout -b dev origin/dev \
+    && git pull origin dev \
+    && cd /home/xxx/Choose \
+    && composer install \
+    && echo 'APP_ENV=staging' > /home/xxx/Choose/.env \
+    && sed -i "s/apiUrl: \"xxx\",/apiUrl: \"http:\/\/$IP_HOST\",/g" /home/xxx/Choose/frontend/test/public/js/codes.js
+  
+USER root
+#COPY ./entrypoint.sh /entrypoint.sh
+RUN adduser www-data xxx \
+    && cd /home/xxx \
+    && chown -R xxx:www-data xxx \
+    # to create /run/php/php7.1-fpm.sock
+    && service php7.1-fpm start \
+    && service memcached start \
+    && sed -ri "s/listen =.*?$/listen = 0.0.0.0:9000/g" /etc/php/7.1/fpm/pool.d/www.conf
+
+RUN apt-get -y install php7.1-dev \
+  && cd /usr/local/ \
+  && mkdir redis_phpext \
+  && curl -o redis_phpext/redis-3.1.3.tgz http://101.96.10.64/pecl.php.net/get/redis-3.1.3.tgz \
+  && cd redis_phpext \
+  && tar zxvf redis-3.1.3.tgz \
+  && cd redis-3.1.3 \
+  && phpize \
+  #&& ./configure --with-php-config=/usr/local/bin/php-config \
+  && ./configure --with-php-config=/usr/bin/php-config \
+  && make && make install \
+  && rm -rf /usr/local/redis_phpext
+
+COPY ./php/conf.d/redis.ini /etc/php/7.1/fpm/conf.d
+
+# supervisor is to 
+COPY ./supervisor/supervisord.conf /etc/supervisor/conf.d/
+COPY ./supervisor/init.d/* /autostart/
+
+# Define working directory.
+#WORKDIR /data
+
+EXPOSE 9000 11211
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+#COPY ./entrypoint.sh /sbin/entrypoint.sh
+#ENTRYPOINT ["/sbin/entrypoint.sh"]

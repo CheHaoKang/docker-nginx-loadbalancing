@@ -1,0 +1,14 @@
+FROM php:7.1.0-fpm
+
+# Install php extension--redis
+
+RUN cd /usr/local/ \
+  && mkdir redis_phpext \
+  && curl -o redis_phpext/redis-3.1.3.tgz http://101.96.10.64/pecl.php.net/get/redis-3.1.3.tgz \
+  && cd redis_phpext \
+  && tar zxvf redis-3.1.3.tgz \
+  && cd redis-3.1.3 \
+  && phpize \
+  && ./configure --with-php-config=/usr/local/bin/php-config \
+  && make && make install \
+  && rm -rf /usr/local/redis_phpext

@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+ 
+  nginx:
+    # build: nginx_php_memcache/.
+    build: nginx/.
+    ports:
+      - "80:80"
+    volumes:
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/nginx/sites-available:/etc/nginx/sites-available"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/nginx/sites-available:/etc/nginx/sites-available"
+    depends_on:
+      - nginx_slave1
+      - nginx_slave2
+      - nginx_slave3
+    restart: always
+
+  nginx_slave1:
+    # build: nginx_php_memcache/.
+    build: nginx/.
+    depends_on:
+      - php
+    volumes:
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/slb/nginx_slave1:/www"
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/nginx_slave1/sites-available:/etc/nginx/sites-available"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/slb/nginx_slave1:/www"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/nginx_slave1/sites-available:/etc/nginx/sites-available"
+
+  nginx_slave2:
+    # build: nginx_php_memcache/.
+    build: nginx/.
+    depends_on:
+      - php
+    volumes:
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/slb/nginx_slave2:/www"
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/nginx_slave2/sites-available:/etc/nginx/sites-available"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/slb/nginx_slave2:/www"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/nginx_slave2/sites-available:/etc/nginx/sites-available"
+
+  nginx_slave3:
+    # build: nginx_php_memcache/.
+    build: nginx/.
+    depends_on:
+      - php
+    volumes:
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/slb/nginx_slave3:/www"
+      #- "/home/deckenkang66/docker-choose/Docker-Choose/nginx_php_memcache/nginx_folder/nginx_slave3/sites-available:/etc/nginx/sites-available"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/slb/nginx_slave3:/www"
+      - "/home/deckenkang66/docker-choose/Docker-Choose/nginx/nginx_folder/nginx_slave3/sites-available:/etc/nginx/sites-available"
+  
+  php: 
+    build: php_redis/.
+    depends_on:
+      - redis
+    ports: 
+      - "9000:9000"
+    volumes:
+      - "/home/deckenkang66/docker-choose/Docker-Choose/php_redis/php/conf.d:/usr/local/etc/php/conf.d"
+
+  redis:
+    image: redis
+    volumes: 
+      - "/home/deckenkang66/docker-choose/Docker-Choose/php_redis/redis/data:/data"
+    ports: 
+      - "6379:6379"
+    command : redis-server --appendonly yes
+
+
+
+  #mariadb:
+   # build: mariadb/.
+   #command: flask run
+   # ports:
+   #   - "3306:3306"
+   #volumes:
+   #  - .:/cli_command
+   #depends_on:
+   #  - db
+   # restart: always

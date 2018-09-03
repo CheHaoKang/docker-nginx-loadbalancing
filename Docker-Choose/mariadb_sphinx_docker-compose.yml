@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+ 
+  sphinx_search:
+    build: sphinxdocker/.
+    ports:
+      - "9306:9306"
+      - "9312:9312"  
+    depends_on:
+      - mariadb
+    restart: always
+
+  mariadb:
+    build: mariadb/.
+   #command: flask run
+    ports:
+      - "3306:3306"
+   #volumes:
+   #  - .:/cli_command
+   #depends_on:
+   #  - db
+    restart: always
